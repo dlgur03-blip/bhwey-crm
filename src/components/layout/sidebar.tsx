@@ -11,6 +11,7 @@ import {
   CheckSquare,
   UserCircle,
   Settings,
+  BookOpen,
   LogOut,
   X,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const mainMenu = [
 ];
 
 const bottomMenu = [
+  { href: "/guide", icon: BookOpen, label: "가이드" },
   { href: "/mypage", icon: UserCircle, label: "마이페이지" },
   { href: "/settings", icon: Settings, label: "설정" },
 ];
