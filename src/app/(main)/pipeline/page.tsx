@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Kanban, List } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Kanban, List, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,15 +15,34 @@ import { MOCK_TEMPLATES, MOCK_CUSTOMERS } from "@/lib/mock-data";
 import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { cn } from "@/lib/utils";
+import type { CustomerGrade } from "@/types";
 
 export default function PipelinePage() {
   const [templateId, setTemplateId] = useState(MOCK_TEMPLATES[0].id);
   const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [gradeFilter, setGradeFilter] = useState<string>("all");
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
 
   const template = MOCK_TEMPLATES.find((t) => t.id === templateId);
 
+  // 담당자 목록 추출
+  const assignees = useMemo(() => {
+    const set = new Map<string, string>();
+    MOCK_CUSTOMERS.forEach((c) => set.set(c.assigneeId, c.assigneeName));
+    return Array.from(set, ([id, name]) => ({ id, name }));
+  }, []);
+
+  // 필터 적용된 고객
+  const filteredCustomers = useMemo(() => {
+    return MOCK_CUSTOMERS.filter((c) => {
+      if (gradeFilter !== "all" && c.grade !== gradeFilter) return false;
+      if (assigneeFilter !== "all" && c.assigneeId !== assigneeFilter) return false;
+      return true;
+    });
+  }, [gradeFilter, assigneeFilter]);
+
   // 리스트 뷰 데이터
-  const listData = MOCK_CUSTOMERS.flatMap((c) =>
+  const listData = filteredCustomers.flatMap((c) =>
     c.processes
       .filter((p) => p.templateId === templateId)
       .map((p) => ({ customer: c, process: p }))
@@ -94,8 +113,54 @@ export default function PipelinePage() {
         </div>
       </div>
 
+      {/* 필터 */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Filter className="w-4 h-4" />
+          필터
+        </div>
+        <Select value={gradeFilter} onValueChange={(v) => setGradeFilter(v ?? "all")}>
+          <SelectTrigger className="w-[120px] h-8 text-xs">
+            <SelectValue placeholder="등급" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 등급</SelectItem>
+            <SelectItem value="VIP">VIP</SelectItem>
+            <SelectItem value="A">A등급</SelectItem>
+            <SelectItem value="B">B등급</SelectItem>
+            <SelectItem value="C">C등급</SelectItem>
+            <SelectItem value="NEW">신규</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={assigneeFilter} onValueChange={(v) => setAssigneeFilter(v ?? "all")}>
+          <SelectTrigger className="w-[120px] h-8 text-xs">
+            <SelectValue placeholder="담당자" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 담당자</SelectItem>
+            {assignees.map((a) => (
+              <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(gradeFilter !== "all" || assigneeFilter !== "all") && (
+          <button
+            onClick={() => { setGradeFilter("all"); setAssigneeFilter("all"); }}
+            className="text-xs text-primary hover:underline"
+          >
+            필터 초기화
+          </button>
+        )}
+      </div>
+
       {/* 칸반 뷰 */}
-      {view === "kanban" && <KanbanBoard selectedTemplateId={templateId} />}
+      {view === "kanban" && (
+        <KanbanBoard
+          selectedTemplateId={templateId}
+          gradeFilter={gradeFilter}
+          assigneeFilter={assigneeFilter}
+        />
+      )}
 
       {/* 리스트 뷰 */}
       {view === "list" && (

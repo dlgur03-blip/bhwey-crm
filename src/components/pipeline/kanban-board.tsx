@@ -16,6 +16,8 @@ import type { Customer, CustomerProcess, ProcessTemplate } from "@/types";
 
 interface Props {
   selectedTemplateId: string;
+  gradeFilter?: string;
+  assigneeFilter?: string;
 }
 
 interface CardData {
@@ -23,7 +25,7 @@ interface CardData {
   process: CustomerProcess;
 }
 
-export function KanbanBoard({ selectedTemplateId }: Props) {
+export function KanbanBoard({ selectedTemplateId, gradeFilter = "all", assigneeFilter = "all" }: Props) {
   const template = MOCK_TEMPLATES.find((t) => t.id === selectedTemplateId);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -37,6 +39,8 @@ export function KanbanBoard({ selectedTemplateId }: Props) {
     }
 
     for (const customer of MOCK_CUSTOMERS) {
+      if (gradeFilter !== "all" && customer.grade !== gradeFilter) continue;
+      if (assigneeFilter !== "all" && customer.assigneeId !== assigneeFilter) continue;
       for (const process of customer.processes) {
         if (process.templateId === selectedTemplateId) {
           const stage = template.stages.find((s) => s.order === process.currentStageOrder);
@@ -48,7 +52,7 @@ export function KanbanBoard({ selectedTemplateId }: Props) {
     }
 
     return map;
-  }, [selectedTemplateId, template]);
+  }, [selectedTemplateId, template, gradeFilter, assigneeFilter]);
 
   function handleDragEnd(event: DragEndEvent) {
     // Mock에서는 상태만 로그, 실제 DB 연동 시 API 호출
