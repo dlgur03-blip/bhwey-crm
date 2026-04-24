@@ -222,6 +222,35 @@ export const MOCK_ACTIVITIES: Activity[] = [
   { id: "act-6", customerId: "cust-6", type: "note", content: "정책자금 3차 보완 요청, 매출증빙 추가 필요", createdBy: "user-1", createdByName: "박팀장", createdAt: "2026-04-20T09:30:00" },
 ];
 
+// ── 메모 Mock ──
+export const MOCK_NOTES: Note[] = [
+  { id: "note-1", customerId: "cust-1", content: "김철수 대표 — 재무제표 보완 후 3차 심사 예정. 매출 10억 이상이라 가산점 기대.", isPinned: true, createdBy: "user-2", createdByName: "이대리", createdAt: "2026-04-24T10:00:00", updatedAt: "2026-04-24T10:00:00" },
+  { id: "note-2", customerId: "cust-1", content: "사업계획서 수정본 메일로 받음. 기술개발 부분 보강 필요.", isPinned: false, createdBy: "user-2", createdByName: "이대리", createdAt: "2026-04-22T14:30:00", updatedAt: "2026-04-22T14:30:00" },
+  { id: "note-3", customerId: "cust-2", content: "정책자금 금리 우대 가능 여부 확인 중. 신용보증재단 연계 검토.", isPinned: true, createdBy: "user-1", createdByName: "박팀장", createdAt: "2026-04-23T09:00:00", updatedAt: "2026-04-23T11:00:00" },
+  { id: "note-4", customerId: "cust-3", content: "창업지원 멘토링 1회차 완료. 사업 모델 피벗 검토 필요.", isPinned: false, createdBy: "user-2", createdByName: "이대리", createdAt: "2026-04-20T16:00:00", updatedAt: "2026-04-20T16:00:00" },
+  { id: "note-5", customerId: "cust-5", content: "현장 실사 일정 4월 28일로 확정. 대표자 동석 필수.", isPinned: true, createdBy: "user-2", createdByName: "이대리", createdAt: "2026-04-24T11:30:00", updatedAt: "2026-04-24T11:30:00" },
+];
+
+// ── 파일 Mock (UI용) ──
+export interface MockFile {
+  id: string;
+  customerId: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadedBy: string;
+  uploadedByName: string;
+  uploadedAt: string;
+}
+
+export const MOCK_FILES: MockFile[] = [
+  { id: "file-1", customerId: "cust-1", name: "사업계획서_v3.pdf", type: "application/pdf", size: 2450000, uploadedBy: "user-2", uploadedByName: "이대리", uploadedAt: "2026-04-22T14:30:00" },
+  { id: "file-2", customerId: "cust-1", name: "재무제표_2025.xlsx", type: "application/xlsx", size: 850000, uploadedBy: "user-2", uploadedByName: "이대리", uploadedAt: "2026-04-20T10:00:00" },
+  { id: "file-3", customerId: "cust-1", name: "사업자등록증.jpg", type: "image/jpeg", size: 1200000, uploadedBy: "user-2", uploadedByName: "이대리", uploadedAt: "2026-04-18T09:00:00" },
+  { id: "file-4", customerId: "cust-2", name: "정책자금_신청서.pdf", type: "application/pdf", size: 3100000, uploadedBy: "user-1", uploadedByName: "박팀장", uploadedAt: "2026-04-23T10:00:00" },
+  { id: "file-5", customerId: "cust-5", name: "기술사업계획서.pdf", type: "application/pdf", size: 4200000, uploadedBy: "user-2", uploadedByName: "이대리", uploadedAt: "2026-04-21T15:00:00" },
+];
+
 // ── 통계 계산 ──
 export function getUncontactedCustomers(days: number = 7): Customer[] {
   const now = new Date();

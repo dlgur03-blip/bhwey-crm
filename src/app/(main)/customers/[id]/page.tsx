@@ -25,7 +25,7 @@ import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ActivityTimeline } from "@/components/customers/activity-timeline";
-import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS } from "@/lib/mock-data";
+import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES } from "@/lib/mock-data";
 import { formatRelativeDate, getDaysAgo } from "@/lib/constants";
 
 export default function CustomerDetailPage({
@@ -46,6 +46,12 @@ export default function CustomerDetailPage({
 
   const activities = MOCK_ACTIVITIES.filter((a) => a.customerId === id);
   const tasks = MOCK_TASKS.filter((t) => t.customerId === id);
+  const notes = MOCK_NOTES.filter((n) => n.customerId === id).sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  const files = MOCK_FILES.filter((f) => f.customerId === id);
   const daysAgo = getDaysAgo(customer.lastContactAt);
 
   return (
@@ -307,35 +313,80 @@ export default function CustomerDetailPage({
             </TabsContent>
 
             {/* 메모 */}
-            <TabsContent value="memo">
-              <Card className="rounded-xl">
-                <CardContent className="p-5 text-center text-muted-foreground text-sm py-12">
-                  <Pin className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                  아직 메모가 없습니다
-                  <div className="mt-3">
-                    <Button variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-1" />
-                      메모 작성
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="memo" className="space-y-3">
+              {notes.length === 0 ? (
+                <Card className="rounded-xl">
+                  <CardContent className="p-5 text-center text-muted-foreground text-sm py-12">
+                    <Pin className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                    아직 메모가 없습니다
+                  </CardContent>
+                </Card>
+              ) : (
+                notes.map((note) => (
+                  <Card key={note.id} className="rounded-xl">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2">
+                          {note.isPinned && (
+                            <Pin className="w-3.5 h-3.5 text-primary shrink-0" />
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {note.createdByName} · {new Date(note.createdAt).toLocaleDateString("ko-KR")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground">
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+              <Button variant="outline" className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                메모 작성
+              </Button>
             </TabsContent>
 
             {/* 파일 */}
-            <TabsContent value="files">
-              <Card className="rounded-xl">
-                <CardContent className="p-5 text-center text-muted-foreground text-sm py-12">
-                  <Paperclip className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                  첨부된 파일이 없습니다
-                  <div className="mt-3">
-                    <Button variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-1" />
-                      파일 업로드
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="files" className="space-y-3">
+              {files.length === 0 ? (
+                <Card className="rounded-xl">
+                  <CardContent className="p-5 text-center text-muted-foreground text-sm py-12">
+                    <Paperclip className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                    첨부된 파일이 없습니다
+                  </CardContent>
+                </Card>
+              ) : (
+                files.map((file) => (
+                  <Card key={file.id} className="rounded-xl">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <FileIcon ext={file.name.split(".").pop() || ""} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">{file.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatFileSize(file.size)} · {file.uploadedByName} · {new Date(file.uploadedAt).toLocaleDateString("ko-KR")}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-primary shrink-0">
+                        다운로드
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+              <Button variant="outline" className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                파일 업로드
+              </Button>
             </TabsContent>
 
             {/* 알림톡 */}
@@ -366,6 +417,30 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="text-foreground font-medium">{value}</span>
     </div>
+  );
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function FileIcon({ ext }: { ext: string }) {
+  const colors: Record<string, string> = {
+    pdf: "text-red-500",
+    xlsx: "text-green-600",
+    xls: "text-green-600",
+    doc: "text-blue-600",
+    docx: "text-blue-600",
+    jpg: "text-purple-500",
+    jpeg: "text-purple-500",
+    png: "text-purple-500",
+  };
+  return (
+    <span className={`text-xs font-bold uppercase ${colors[ext] || "text-primary"}`}>
+      {ext}
+    </span>
   );
 }
 
