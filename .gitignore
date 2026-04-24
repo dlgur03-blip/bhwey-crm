@@ -45,3 +45,6 @@ AGENTS.md
 CLAUDE.md
 
 .vercel
+
+/src/generated/prisma
+.env

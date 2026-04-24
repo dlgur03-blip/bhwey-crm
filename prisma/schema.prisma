@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── 사용자 ──
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole  @default(STAFF)
+  phone         String?
+  profileImg    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // 관계
+  customers     Customer[]    @relation("AssignedCustomers")
+  tasks         Task[]        @relation("AssignedTasks")
+  activities    Activity[]
+  notes         Note[]
+  alimtalkLogs  AlimtalkLog[]
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+// ── 고객 ──
+model Customer {
+  id            String          @id @default(cuid())
+  name          String
+  phone         String
+  email         String
+  company       String
+  position      String          @default("")
+  grade         CustomerGrade   @default(NEW)
+  tags          String[]
+  // 사업자 정보
+  bizNumber     String?
+  bizType       String?
+  bizCategory   String?
+  address       String?
+  foundedAt     DateTime?
+  ceoName       String?
+  revenue       BigInt?
+  employees     Int?
+  // 추가 정보
+  birthDate     DateTime?
+  source        String?
+  memo          String?
+  lastContactAt DateTime        @default(now())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // 관계
+  assigneeId    String
+  assignee      User            @relation("AssignedCustomers", fields: [assigneeId], references: [id])
+  processes     CustomerProcess[]
+  activities    Activity[]
+  tasks         Task[]
+  notes         Note[]
+  alimtalkLogs  AlimtalkLog[]
+
+  @@index([assigneeId])
+  @@index([grade])
+  @@index([lastContactAt])
+}
+
+enum CustomerGrade {
+  VIP
+  A
+  B
+  C
+  NEW
+}
+
+// ── 프로세스 템플릿 ──
+model ProcessTemplate {
+  id          String          @id @default(cuid())
+  name        String
+  description String          @default("")
+  color       String          @default("#2563EB")
+  icon        String          @default("FileText")
+  isDefault   Boolean         @default(false)
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  stages      TemplateStage[]
+  processes   CustomerProcess[]
+}
+
+model TemplateStage {
+  id          String          @id @default(cuid())
+  name        String
+  description String          @default("")
+  order       Int
+  checklist   String[]
+
+  templateId  String
+  template    ProcessTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@unique([templateId, order])
+}
+
+// ── 고객-프로세스 ──
+model CustomerProcess {
+  id                String        @id @default(cuid())
+  currentStageOrder Int           @default(1)
+  status            ProcessStatus @default(IN_PROGRESS)
+  checklistStatus   Json          @default("{}")
+  startedAt         DateTime      @default(now())
+  completedAt       DateTime?
+
+  customerId        String
+  customer          Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  templateId        String
+  template          ProcessTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([customerId])
+  @@index([templateId])
+  @@index([status])
+}
+
+enum ProcessStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// ── 활동 ──
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  content     String
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+
+  customerId  String
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User         @relation(fields: [createdById], references: [id])
+
+  @@index([customerId])
+  @@index([createdAt])
+}
+
+enum ActivityType {
+  PHONE
+  EMAIL
+  VISIT
+  ALIMTALK
+  NOTE
+  FILE
+  STAGE_CHANGE
+  TASK_COMPLETE
+}
+
+// ── 업무 ──
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  customerId  String?
+  customer    Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  assigneeId  String
+  assignee    User         @relation("AssignedTasks", fields: [assigneeId], references: [id])
+
+  @@index([assigneeId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+// ── 메모 ──
+model Note {
+  id          String   @id @default(cuid())
+  content     String
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@index([customerId])
+}
+
+// ── 알림톡 템플릿 ──
+model AlimtalkTemplate {
+  id           String   @id @default(cuid())
+  templateCode String   @unique
+  title        String
+  content      String
+  variables    String[]
+  status       String   @default("pending") // approved, pending, rejected
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ── 알림톡 발송 로그 ──
+model AlimtalkLog {
+  id           String   @id @default(cuid())
+  templateCode String
+  templateTitle String
+  content      String
+  status       String   @default("pending") // pending, sent, delivered, failed
+  resultCode   String?
+  sentAt       DateTime @default(now())
+
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sentById     String
+  sentBy       User     @relation(fields: [sentById], references: [id])
+
+  @@index([customerId])
+  @@index([sentAt])
+}
