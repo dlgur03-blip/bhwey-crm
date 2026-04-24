@@ -1,26 +1,115 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   --font-mono: var(--font-geist-mono);
+  --font-heading: "Pretendard Variable", "Pretendard", sans-serif;
+  --font-pretendard: "Pretendard Variable", "Pretendard", sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* BH WEY 커스텀 시맨틱 컬러 */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-surface: var(--surface);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* ── BH WEY 밝은 블루 테마 ── */
+  --background: oklch(1 0 0);                    /* #FFFFFF */
+  --foreground: oklch(0.258 0.024 264);           /* #1E293B */
+  --card: oklch(1 0 0);                           /* #FFFFFF */
+  --card-foreground: oklch(0.258 0.024 264);      /* #1E293B */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.258 0.024 264);
+  --primary: oklch(0.546 0.245 264);              /* #2563EB 밝은 블루 */
+  --primary-foreground: oklch(1 0 0);             /* #FFFFFF */
+  --secondary: oklch(0.968 0.006 264);            /* #F1F5F9 */
+  --secondary-foreground: oklch(0.258 0.024 264); /* #1E293B */
+  --muted: oklch(0.968 0.006 264);                /* #F1F5F9 */
+  --muted-foreground: oklch(0.554 0.022 256);     /* #64748B */
+  --accent: oklch(0.97 0.014 264);                /* #EFF6FF */
+  --accent-foreground: oklch(0.258 0.024 264);    /* #1E293B */
+  --destructive: oklch(0.637 0.237 25);           /* #EF4444 */
+  --border: oklch(0.929 0.009 255);               /* #E2E8F0 */
+  --input: oklch(0.929 0.009 255);                /* #E2E8F0 */
+  --ring: oklch(0.546 0.245 264);                 /* #2563EB */
+
+  /* 차트 컬러 (밝은 톤) */
+  --chart-1: oklch(0.546 0.245 264);              /* #2563EB Blue */
+  --chart-2: oklch(0.723 0.198 142);              /* #22C55E Green */
+  --chart-3: oklch(0.795 0.163 84);               /* #F59E0B Amber */
+  --chart-4: oklch(0.637 0.237 25);               /* #EF4444 Red */
+  --chart-5: oklch(0.623 0.214 259);              /* #3B82F6 Sky */
+
+  /* 사이드바 (밝은 배경) */
+  --sidebar: oklch(0.968 0.006 264);              /* #F1F5F9 */
+  --sidebar-foreground: oklch(0.372 0.03 256);    /* #475569 */
+  --sidebar-primary: oklch(0.546 0.245 264);      /* #2563EB */
+  --sidebar-primary-foreground: oklch(1 0 0);     /* #FFFFFF */
+  --sidebar-accent: oklch(0.97 0.014 264);        /* #EFF6FF */
+  --sidebar-accent-foreground: oklch(0.546 0.245 264); /* #2563EB */
+  --sidebar-border: oklch(0.929 0.009 255);       /* #E2E8F0 */
+  --sidebar-ring: oklch(0.546 0.245 264);         /* #2563EB */
+
+  --radius: 0.75rem;
+
+  /* 시맨틱 컬러 */
+  --success: oklch(0.723 0.198 142);              /* #22C55E */
+  --warning: oklch(0.795 0.163 84);               /* #F59E0B */
+  --info: oklch(0.623 0.214 259);                 /* #3B82F6 */
+  --surface: oklch(0.985 0.002 247);              /* #F8FAFC */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }
