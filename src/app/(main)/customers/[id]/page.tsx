@@ -25,7 +25,7 @@ import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ActivityTimeline } from "@/components/customers/activity-timeline";
-import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES } from "@/lib/mock-data";
+import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS } from "@/lib/mock-data";
 import { formatRelativeDate, getDaysAgo } from "@/lib/constants";
 
 export default function CustomerDetailPage({
@@ -52,6 +52,7 @@ export default function CustomerDetailPage({
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
   const files = MOCK_FILES.filter((f) => f.customerId === id);
+  const alimtalkLogs = MOCK_ALIMTALK_LOGS.filter((l) => l.customerId === id);
   const daysAgo = getDaysAgo(customer.lastContactAt);
 
   return (
@@ -390,19 +391,43 @@ export default function CustomerDetailPage({
             </TabsContent>
 
             {/* 알림톡 */}
-            <TabsContent value="alimtalk">
-              <Card className="rounded-xl">
-                <CardContent className="p-5 text-center text-muted-foreground text-sm py-12">
-                  <MessageSquare className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
-                  알림톡 발송 이력이 없습니다
-                  <div className="mt-3">
-                    <Button variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-1" />
-                      알림톡 발송
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="alimtalk" className="space-y-3">
+              {alimtalkLogs.length === 0 ? (
+                <Card className="rounded-xl">
+                  <CardContent className="p-5 text-center text-muted-foreground text-sm py-12">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
+                    알림톡 발송 이력이 없습니다
+                  </CardContent>
+                </Card>
+              ) : (
+                alimtalkLogs.map((log) => {
+                  const statusMap: Record<string, { label: string; color: string }> = {
+                    pending: { label: "대기", color: "bg-yellow-100 text-yellow-800" },
+                    sent: { label: "발송", color: "bg-blue-100 text-blue-800" },
+                    delivered: { label: "수신", color: "bg-green-100 text-green-800" },
+                    failed: { label: "실패", color: "bg-red-100 text-red-800" },
+                  };
+                  const st = statusMap[log.status] || statusMap.pending;
+                  return (
+                    <Card key={log.id} className="rounded-xl">
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-foreground">{log.templateTitle}</span>
+                          <Badge variant="secondary" className={`text-[10px] ${st.color}`}>{st.label}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{log.content}</p>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(log.sentAt).toLocaleString("ko-KR")}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+              <Button variant="outline" className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                알림톡 발송
+              </Button>
             </TabsContent>
           </Tabs>
         </div>

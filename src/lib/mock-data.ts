@@ -4,6 +4,8 @@ import type {
   Task,
   Activity,
   Note,
+  AlimtalkTemplate,
+  AlimtalkLog,
 } from "@/types";
 
 // ── 프로세스 템플릿 ──
@@ -249,6 +251,23 @@ export const MOCK_FILES: MockFile[] = [
   { id: "file-3", customerId: "cust-1", name: "사업자등록증.jpg", type: "image/jpeg", size: 1200000, uploadedBy: "user-2", uploadedByName: "이대리", uploadedAt: "2026-04-18T09:00:00" },
   { id: "file-4", customerId: "cust-2", name: "정책자금_신청서.pdf", type: "application/pdf", size: 3100000, uploadedBy: "user-1", uploadedByName: "박팀장", uploadedAt: "2026-04-23T10:00:00" },
   { id: "file-5", customerId: "cust-5", name: "기술사업계획서.pdf", type: "application/pdf", size: 4200000, uploadedBy: "user-2", uploadedByName: "이대리", uploadedAt: "2026-04-21T15:00:00" },
+];
+
+// ── 알림톡 템플릿 Mock ──
+export const MOCK_ALIMTALK_TEMPLATES: AlimtalkTemplate[] = [
+  { id: "atpl-1", templateCode: "BIZ_001", title: "서류 보완 요청", content: "#{고객명}님, 안녕하세요.\n#{프로세스명} 진행을 위해 아래 서류를 보완해주세요.\n\n• #{보완항목}\n\n기한: #{기한}\n문의: #{담당자연락처}", variables: ["고객명", "프로세스명", "보완항목", "기한", "담당자연락처"], status: "approved" },
+  { id: "atpl-2", templateCode: "BIZ_002", title: "심사 결과 안내", content: "#{고객명}님, #{프로세스명} 심사 결과를 안내드립니다.\n\n결과: #{결과}\n\n자세한 내용은 담당자에게 문의해주세요.\n#{담당자연락처}", variables: ["고객명", "프로세스명", "결과", "담당자연락처"], status: "approved" },
+  { id: "atpl-3", templateCode: "BIZ_003", title: "일정 안내", content: "#{고객명}님, #{일정구분} 일정을 안내드립니다.\n\n일시: #{일시}\n장소: #{장소}\n준비물: #{준비물}\n\n감사합니다.", variables: ["고객명", "일정구분", "일시", "장소", "준비물"], status: "approved" },
+  { id: "atpl-4", templateCode: "BIZ_004", title: "미연락 안부 인사", content: "#{고객명}님, 안녕하세요.\nBH WEY입니다.\n\n근황이 궁금하여 연락드립니다.\n혹시 진행 중이신 사항이 있으시면 편하게 연락 주세요.\n\n#{담당자명} 드림", variables: ["고객명", "담당자명"], status: "pending" },
+];
+
+// ── 알림톡 발송 이력 Mock ──
+export const MOCK_ALIMTALK_LOGS: AlimtalkLog[] = [
+  { id: "alog-1", customerId: "cust-1", customerName: "김철수", templateCode: "BIZ_001", templateTitle: "서류 보완 요청", content: "김철수님, 정부지원사업 진행을 위해 재무제표를 보완해주세요.", status: "delivered", sentAt: "2026-04-24T14:35:00" },
+  { id: "alog-2", customerId: "cust-2", customerName: "이영희", templateCode: "BIZ_002", templateTitle: "심사 결과 안내", content: "이영희님, 정책자금 심사 결과를 안내드립니다. 결과: 1차 통과", status: "delivered", sentAt: "2026-04-23T10:15:00" },
+  { id: "alog-3", customerId: "cust-5", customerName: "한동욱", templateCode: "BIZ_003", templateTitle: "일정 안내", content: "한동욱님, 현장 실사 일정을 안내드립니다. 일시: 4월 28일", status: "sent", sentAt: "2026-04-24T11:00:00" },
+  { id: "alog-4", customerId: "cust-6", customerName: "정수진", templateCode: "BIZ_001", templateTitle: "서류 보완 요청", content: "정수진님, 정책자금 진행을 위해 매출증빙을 보완해주세요.", status: "failed", sentAt: "2026-04-22T09:30:00", resultCode: "E001" },
+  { id: "alog-5", customerId: "cust-3", customerName: "박민수", templateCode: "BIZ_004", templateTitle: "미연락 안부 인사", content: "박민수님, 근황이 궁금하여 연락드립니다.", status: "pending", sentAt: "2026-04-24T16:00:00" },
 ];
 
 // ── 통계 계산 ──
