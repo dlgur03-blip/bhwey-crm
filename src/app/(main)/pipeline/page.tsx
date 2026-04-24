@@ -43,7 +43,17 @@ export default function PipelinePage() {
           {/* 템플릿 선택 */}
           <Select value={templateId} onValueChange={(v) => setTemplateId(v ?? templateId)}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue />
+              <SelectValue placeholder="프로세스 선택">
+                {template && (
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: template.color }}
+                    />
+                    {template.name}
+                  </div>
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {MOCK_TEMPLATES.map((t) => (
