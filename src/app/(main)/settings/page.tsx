@@ -76,7 +76,7 @@ export default function SettingsPage() {
                 <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-lg">
                   BH
                 </div>
-                <Button variant="outline" size="sm">로고 변경</Button>
+                <Button variant="outline" size="sm" onClick={() => alert("로고 변경 기능은 준비 중입니다")}>로고 변경</Button>
               </div>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function SettingsPage() {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <Button variant="ghost" size="sm" className="text-xs h-7">
+                      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => alert(`${user.name} 사용자 편집 기능은 준비 중입니다`)}>
                         편집
                       </Button>
                     </td>

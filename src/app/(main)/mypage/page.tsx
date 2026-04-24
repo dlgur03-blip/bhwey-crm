@@ -254,7 +254,18 @@ export default function MypagePage() {
               />
             </div>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => {
+            if (!passwords.current || !passwords.newPw || !passwords.confirmPw) {
+              alert("모든 비밀번호 필드를 입력해주세요");
+              return;
+            }
+            if (passwords.newPw !== passwords.confirmPw) {
+              alert("새 비밀번호가 일치하지 않습니다");
+              return;
+            }
+            alert("비밀번호가 변경되었습니다 (Mock)");
+            setPasswords({ current: "", newPw: "", confirmPw: "" });
+          }}>
             <Lock className="w-4 h-4" />
             비밀번호 변경
           </Button>
