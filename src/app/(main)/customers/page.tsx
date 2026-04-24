@@ -97,7 +97,9 @@ export default function CustomersPage() {
         </div>
         <Select value={gradeFilter} onValueChange={(v) => setGradeFilter(v ?? "all")}>
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="등급" />
+            <SelectValue>
+              {gradeFilter === "all" ? "전체 등급" : gradeFilter === "NEW" ? "신규" : gradeFilter === "VIP" ? "VIP" : `${gradeFilter}등급`}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 등급</SelectItem>
@@ -111,7 +113,9 @@ export default function CustomersPage() {
         <Select value={sortBy} onValueChange={(v) => setSortBy(v ?? "name")}>
           <SelectTrigger className="w-[160px]">
             <ArrowUpDown className="w-4 h-4 mr-2" />
-            <SelectValue />
+            <SelectValue>
+              {sortBy === "name" ? "이름순" : sortBy === "lastContact" ? "마지막 연락순" : "등록일순"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="name">이름순</SelectItem>

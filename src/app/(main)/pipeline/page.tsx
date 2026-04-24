@@ -121,7 +121,9 @@ export default function PipelinePage() {
         </div>
         <Select value={gradeFilter} onValueChange={(v) => setGradeFilter(v ?? "all")}>
           <SelectTrigger className="w-[120px] h-8 text-xs">
-            <SelectValue placeholder="등급" />
+            <SelectValue>
+              {gradeFilter === "all" ? "전체 등급" : gradeFilter === "NEW" ? "신규" : `${gradeFilter}등급`}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 등급</SelectItem>
@@ -134,7 +136,9 @@ export default function PipelinePage() {
         </Select>
         <Select value={assigneeFilter} onValueChange={(v) => setAssigneeFilter(v ?? "all")}>
           <SelectTrigger className="w-[120px] h-8 text-xs">
-            <SelectValue placeholder="담당자" />
+            <SelectValue>
+              {assigneeFilter === "all" ? "전체 담당자" : assignees.find((a) => a.id === assigneeFilter)?.name ?? "담당자"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 담당자</SelectItem>
