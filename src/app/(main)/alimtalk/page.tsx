@@ -46,6 +46,7 @@ export default function AlimtalkPage() {
   const [logStatusFilter, setLogStatusFilter] = useState("all");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [sendCustomer, setSendCustomer] = useState("");
+  const [activeTab, setActiveTab] = useState("templates");
 
   const filteredLogs = MOCK_ALIMTALK_LOGS.filter((log) => {
     if (logSearch) {
@@ -80,7 +81,7 @@ export default function AlimtalkPage() {
             카카오 알림톡 템플릿 관리 및 발송
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setActiveTab("send")}>
           <Send className="w-4 h-4" />
           알림톡 발송
         </Button>
@@ -109,7 +110,7 @@ export default function AlimtalkPage() {
       </div>
 
       {/* 탭 */}
-      <Tabs defaultValue="templates" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v ?? "templates")} className="space-y-4">
         <TabsList className="bg-muted/50 p-1 rounded-lg">
           <TabsTrigger value="templates" className="text-sm gap-1.5">
             <FileText className="w-3.5 h-3.5" />
@@ -131,7 +132,7 @@ export default function AlimtalkPage() {
             <span className="text-sm font-medium text-foreground">
               등록된 템플릿 {MOCK_ALIMTALK_TEMPLATES.length}개
             </span>
-            <Button variant="outline" size="sm" className="gap-1.5">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => alert("템플릿 등록 기능은 준비 중입니다")}>
               <Plus className="w-4 h-4" />
               템플릿 등록
             </Button>
@@ -163,8 +164,8 @@ export default function AlimtalkPage() {
                     ))}
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" className="text-xs h-7">수정</Button>
-                    <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive">삭제</Button>
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => alert(`"${tpl.title}" 템플릿 수정 기능은 준비 중입니다`)}>수정</Button>
+                    <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive" onClick={() => { if (confirm(`"${tpl.title}" 템플릿을 삭제하시겠습니까?`)) alert("템플릿이 삭제되었습니다 (Mock)"); }}>삭제</Button>
                   </div>
                 </div>
               </CardContent>
@@ -240,7 +241,18 @@ export default function AlimtalkPage() {
                 </>
               )}
 
-              <Button className="w-full gap-2" disabled={!selectedTemplate || !sendCustomer}>
+              <Button
+                className="w-full gap-2"
+                disabled={!selectedTemplate || !sendCustomer}
+                onClick={() => {
+                  const cust = MOCK_CUSTOMERS.find((c) => c.id === sendCustomer);
+                  const tpl = MOCK_ALIMTALK_TEMPLATES.find((t) => t.id === selectedTemplate);
+                  alert(`${cust?.name}님에게 "${tpl?.title}" 알림톡 발송 완료 (Mock)`);
+                  setSendCustomer("");
+                  setSelectedTemplate("");
+                  setActiveTab("logs");
+                }}
+              >
                 <Send className="w-4 h-4" />
                 발송하기
               </Button>

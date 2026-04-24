@@ -1,6 +1,7 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -21,10 +22,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ActivityTimeline } from "@/components/customers/activity-timeline";
+import { CustomerModal } from "@/components/modals/customer-modal";
+import { ScheduleModal } from "@/components/modals/schedule-modal";
 import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS, MOCK_SCHEDULES } from "@/lib/mock-data";
 import { ScheduleList } from "@/components/calendar/schedule-list";
 import { formatRelativeDate, getDaysAgo } from "@/lib/constants";
@@ -36,6 +49,13 @@ export default function CustomerDetailPage({
 }) {
   const { id } = use(params);
   const customer = MOCK_CUSTOMERS.find((c) => c.id === id);
+  const router = useRouter();
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [noteModalOpen, setNoteModalOpen] = useState(false);
+  const [noteInput, setNoteInput] = useState("");
 
   if (!customer) {
     return (
@@ -74,11 +94,16 @@ export default function CustomerDetailPage({
           <GradeBadge grade={customer.grade} />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setEditModalOpen(true)}>
             <Edit className="w-4 h-4 mr-1" />
             수정
           </Button>
-          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setDeleteConfirmOpen(true)}
+          >
             <Trash2 className="w-4 h-4 mr-1" />
             삭제
           </Button>
@@ -96,14 +121,14 @@ export default function CustomerDetailPage({
                 기본 정보
               </h3>
               <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-foreground">
+                <a href={`tel:${customer.phone}`} className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
                   <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
                   {customer.phone}
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
+                </a>
+                <a href={`mailto:${customer.email}`} className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
                   <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
                   {customer.email}
-                </div>
+                </a>
                 <div className="flex items-center gap-2 text-foreground">
                   <Building2 className="w-4 h-4 text-muted-foreground shrink-0" />
                   {customer.company} · {customer.position}
@@ -168,10 +193,12 @@ export default function CustomerDetailPage({
                 <span className="text-sm text-foreground">{customer.lastContactAt}</span>
                 <ContactDaysBadge lastContactAt={customer.lastContactAt} />
               </div>
-              <Button variant="outline" size="sm" className="w-full">
-                <Phone className="w-4 h-4 mr-2" />
-                연락 기록 추가
-              </Button>
+              <a href={`tel:${customer.phone}`} className="block">
+                <Button variant="outline" size="sm" className="w-full">
+                  <Phone className="w-4 h-4 mr-2" />
+                  연락 기록 추가
+                </Button>
+              </a>
             </CardContent>
           </Card>
         </div>
@@ -195,7 +222,7 @@ export default function CustomerDetailPage({
                 <Card className="rounded-xl border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <p className="text-sm mb-3">진행 중인 프로세스가 없습니다</p>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => alert("프로세스 추가 기능은 준비 중입니다")}>
                       <Plus className="w-4 h-4 mr-1" />
                       프로세스 추가
                     </Button>
@@ -270,7 +297,7 @@ export default function CustomerDetailPage({
                   </Card>
                 ))
               )}
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => alert("프로세스 추가 기능은 준비 중입니다")}>
                 <Plus className="w-4 h-4 mr-2" />
                 프로세스 추가
               </Button>
@@ -282,7 +309,7 @@ export default function CustomerDetailPage({
                 <h3 className="text-sm font-semibold text-foreground">
                   전체 일정 <span className="text-muted-foreground font-normal">{schedules.length}건</span>
                 </h3>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setScheduleModalOpen(true)}>
                   <Plus className="w-3.5 h-3.5" />
                   일정 추가
                 </Button>
@@ -380,7 +407,7 @@ export default function CustomerDetailPage({
                   </Card>
                 ))
               )}
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => router.push("/tasks")}>
                 <Plus className="w-4 h-4 mr-2" />
                 업무 추가
               </Button>
@@ -409,10 +436,20 @@ export default function CustomerDetailPage({
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground">
+                          <button
+                            className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-foreground"
+                            onClick={() => alert("메모 수정 기능은 준비 중입니다")}
+                          >
                             <Edit className="w-3.5 h-3.5" />
                           </button>
-                          <button className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-destructive">
+                          <button
+                            className="p-1 hover:bg-accent rounded text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              if (confirm("이 메모를 삭제하시겠습니까?")) {
+                                alert("메모가 삭제되었습니다 (Mock)");
+                              }
+                            }}
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -422,7 +459,7 @@ export default function CustomerDetailPage({
                   </Card>
                 ))
               )}
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => setNoteModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 메모 작성
               </Button>
@@ -450,14 +487,19 @@ export default function CustomerDetailPage({
                           {formatFileSize(file.size)} · {file.uploadedByName} · {new Date(file.uploadedAt).toLocaleDateString("ko-KR")}
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-primary shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-primary shrink-0"
+                        onClick={() => alert(`"${file.name}" 다운로드 기능은 준비 중입니다`)}
+                      >
                         다운로드
                       </Button>
                     </CardContent>
                   </Card>
                 ))
               )}
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => alert("파일 업로드 기능은 준비 중입니다")}>
                 <Plus className="w-4 h-4 mr-2" />
                 파일 업로드
               </Button>
@@ -497,7 +539,7 @@ export default function CustomerDetailPage({
                   );
                 })
               )}
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => router.push("/alimtalk")}>
                 <Plus className="w-4 h-4 mr-2" />
                 알림톡 발송
               </Button>
@@ -505,6 +547,91 @@ export default function CustomerDetailPage({
           </Tabs>
         </div>
       </div>
+
+      {/* 고객 수정 모달 */}
+      <CustomerModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        mode="edit"
+        defaultValues={{
+          name: customer.name,
+          phone: customer.phone,
+          email: customer.email,
+          company: customer.company,
+          position: customer.position,
+          grade: customer.grade,
+          notes: "",
+        }}
+        onSubmit={(data) => {
+          alert(`고객 정보 수정 완료: ${data.name}`);
+        }}
+      />
+
+      {/* 일정 추가 모달 */}
+      <ScheduleModal
+        open={scheduleModalOpen}
+        onOpenChange={setScheduleModalOpen}
+        onSubmit={(data) => {
+          alert(`일정 등록 완료: ${data.title}`);
+        }}
+      />
+
+      {/* 삭제 확인 모달 */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>고객 삭제</DialogTitle>
+            <DialogDescription>
+              {customer.name} 고객을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                alert("고객이 삭제되었습니다 (Mock)");
+                router.push("/customers");
+              }}
+            >
+              삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 메모 작성 모달 */}
+      <Dialog open={noteModalOpen} onOpenChange={setNoteModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>메모 작성</DialogTitle>
+            <DialogDescription>{customer.name} 고객에 대한 메모를 작성합니다</DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Textarea
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              placeholder="메모 내용을 입력하세요"
+              rows={4}
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
+            <Button
+              onClick={() => {
+                if (noteInput.trim()) {
+                  alert(`메모 저장 완료: "${noteInput.slice(0, 30)}..."`);
+                  setNoteInput("");
+                  setNoteModalOpen(false);
+                }
+              }}
+            >
+              저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

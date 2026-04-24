@@ -15,6 +15,7 @@ import { MOCK_TEMPLATES, MOCK_CUSTOMERS } from "@/lib/mock-data";
 import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import type { CustomerGrade } from "@/types";
 
 export default function PipelinePage() {
@@ -182,10 +183,12 @@ export default function PipelinePage() {
             </thead>
             <tbody>
               {listData.map(({ customer, process }) => (
-                <tr key={process.id} className="border-b border-border last:border-0 hover:bg-accent/50">
+                <tr key={process.id} className="border-b border-border last:border-0 hover:bg-accent/50 cursor-pointer" onClick={() => window.location.href = `/customers/${customer.id}`}>
                   <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-foreground">{customer.name}</div>
-                    <div className="text-xs text-muted-foreground">{customer.company}</div>
+                    <Link href={`/customers/${customer.id}`} className="block">
+                      <div className="text-sm font-medium text-foreground hover:text-primary">{customer.name}</div>
+                      <div className="text-xs text-muted-foreground">{customer.company}</div>
+                    </Link>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
                     <GradeBadge grade={customer.grade} />
