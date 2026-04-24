@@ -16,7 +16,7 @@ const navItems = [
   { href: "/customers", icon: Users, label: "고객" },
   { href: "/pipeline", icon: Kanban, label: "파이프라인" },
   { href: "/tasks", icon: CheckSquare, label: "업무" },
-  { href: "/more", icon: MoreHorizontal, label: "더보기" },
+  { href: "/more", icon: MoreHorizontal, label: "더보기", isMore: true },
 ];
 
 export function BottomNav() {
@@ -28,14 +28,14 @@ export function BottomNav() {
         {navItems.map((item) => {
           const isActive =
             item.href === "/more"
-              ? ["/alimtalk", "/templates", "/mypage", "/settings"].some(
+              ? ["/alimtalk", "/templates", "/mypage", "/settings", "/guide", "/more"].some(
                   (p) => pathname === p || pathname.startsWith(p + "/")
                 )
               : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
-              href={item.href === "/more" ? "/alimtalk" : item.href}
+              href={item.href}
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px]",
                 isActive ? "text-primary" : "text-muted-foreground"
