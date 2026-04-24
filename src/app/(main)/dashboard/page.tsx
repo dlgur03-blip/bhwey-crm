@@ -2,6 +2,7 @@ import { UncontactedCards } from "@/components/dashboard/uncontacted-cards";
 import { TodayTasks } from "@/components/dashboard/today-tasks";
 import { ProcessSummary } from "@/components/dashboard/process-summary";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { DashboardCalendar } from "@/components/dashboard/dashboard-calendar";
 
 export default function DashboardPage() {
   return (
@@ -25,6 +26,9 @@ export default function DashboardPage() {
           <RecentActivity />
         </div>
       </div>
+
+      {/* 일정 캘린더 */}
+      <DashboardCalendar />
     </div>
   );
 }

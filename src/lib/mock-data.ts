@@ -6,6 +6,7 @@ import type {
   Note,
   AlimtalkTemplate,
   AlimtalkLog,
+  Schedule,
 } from "@/types";
 
 // ── 프로세스 템플릿 ──
@@ -268,6 +269,29 @@ export const MOCK_ALIMTALK_LOGS: AlimtalkLog[] = [
   { id: "alog-3", customerId: "cust-5", customerName: "한동욱", templateCode: "BIZ_003", templateTitle: "일정 안내", content: "한동욱님, 현장 실사 일정을 안내드립니다. 일시: 4월 28일", status: "sent", sentAt: "2026-04-24T11:00:00" },
   { id: "alog-4", customerId: "cust-6", customerName: "정수진", templateCode: "BIZ_001", templateTitle: "서류 보완 요청", content: "정수진님, 정책자금 진행을 위해 매출증빙을 보완해주세요.", status: "failed", sentAt: "2026-04-22T09:30:00", resultCode: "E001" },
   { id: "alog-5", customerId: "cust-3", customerName: "박민수", templateCode: "BIZ_004", templateTitle: "미연락 안부 인사", content: "박민수님, 근황이 궁금하여 연락드립니다.", status: "pending", sentAt: "2026-04-24T16:00:00" },
+];
+
+// ── 일정 Mock ──
+export const MOCK_SCHEDULES: Schedule[] = [
+  // 과거 일정
+  { id: "sch-1", customerId: "cust-1", customerName: "김철수", title: "초기 상담 미팅", description: "사업 적격성 확인 및 지원사업 매칭 상담", type: "meeting", date: "2026-03-15", time: "10:00", endTime: "11:00", isCompleted: true, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-03-10T09:00:00" },
+  { id: "sch-2", customerId: "cust-1", customerName: "김철수", title: "서류 제출 안내 전화", description: "사업자등록증, 재무제표 제출 요청", type: "call", date: "2026-03-20", time: "14:00", isCompleted: true, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-03-18T09:00:00" },
+  { id: "sch-3", customerId: "cust-2", customerName: "이영희", title: "정책자금 1차 상담", description: "정책자금 신청 요건 확인", type: "meeting", date: "2026-03-22", time: "15:00", endTime: "16:00", isCompleted: true, assigneeId: "user-1", assigneeName: "박팀장", createdAt: "2026-03-20T09:00:00" },
+  { id: "sch-4", customerId: "cust-3", customerName: "박민수", title: "창업지원 프로그램 안내", type: "visit", date: "2026-04-01", time: "11:00", endTime: "12:00", isCompleted: true, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-03-28T09:00:00" },
+  { id: "sch-5", customerId: "cust-1", customerName: "김철수", title: "서류 심사 결과 안내", description: "신청·접수 단계 완료 안내", type: "call", date: "2026-04-05", time: "10:30", isCompleted: true, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-03T09:00:00" },
+  { id: "sch-6", customerId: "cust-4", customerName: "최지은", title: "기술보증 현장 실사", description: "기술 역량 및 사업 현황 현장 확인", type: "visit", date: "2026-04-10", time: "09:00", endTime: "12:00", isCompleted: true, assigneeId: "user-1", assigneeName: "박팀장", createdAt: "2026-04-07T09:00:00" },
+  { id: "sch-7", customerId: "cust-5", customerName: "한동욱", title: "정부지원사업 서류 보완 요청", type: "call", date: "2026-04-12", time: "16:00", isCompleted: true, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-10T09:00:00" },
+  { id: "sch-8", customerId: "cust-2", customerName: "이영희", title: "서류 준비 현황 확인 전화", type: "call", date: "2026-04-15", time: "11:00", isCompleted: true, assigneeId: "user-1", assigneeName: "박팀장", createdAt: "2026-04-13T09:00:00" },
+  // 오늘 / 내일
+  { id: "sch-9", customerId: "cust-1", customerName: "김철수", title: "사업계획서 최종 검토 미팅", description: "제출 전 최종 검토 및 수정사항 논의", type: "meeting", date: "2026-04-24", time: "14:00", endTime: "15:30", isCompleted: false, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-20T09:00:00" },
+  { id: "sch-10", customerId: "cust-6", customerName: "오세훈", title: "추가 서류 접수 마감", description: "기술설명서 제출 기한", type: "deadline", date: "2026-04-24", isCompleted: false, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-18T09:00:00" },
+  { id: "sch-11", customerId: "cust-3", customerName: "박민수", title: "창업 멘토링 세션", description: "1:1 멘토링 (사업모델 피드백)", type: "meeting", date: "2026-04-25", time: "10:00", endTime: "11:30", isCompleted: false, assigneeId: "user-1", assigneeName: "박팀장", createdAt: "2026-04-21T09:00:00" },
+  // 미래 일정
+  { id: "sch-12", customerId: "cust-4", customerName: "최지은", title: "기술보증 심사위원회 발표", description: "기술 평가 결과 발표 참석", type: "meeting", date: "2026-04-28", time: "14:00", endTime: "16:00", isCompleted: false, assigneeId: "user-1", assigneeName: "박팀장", createdAt: "2026-04-22T09:00:00" },
+  { id: "sch-13", customerId: "cust-5", customerName: "한동욱", title: "서류 심사 결과 통보 예정", type: "deadline", date: "2026-04-30", isCompleted: false, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-23T09:00:00" },
+  { id: "sch-14", customerId: "cust-2", customerName: "이영희", title: "정책자금 2차 면담", description: "심의위원회 사전 면담", type: "meeting", date: "2026-05-02", time: "13:00", endTime: "14:00", isCompleted: false, assigneeId: "user-1", assigneeName: "박팀장", createdAt: "2026-04-24T09:00:00" },
+  { id: "sch-15", customerId: "cust-7", customerName: "이미정", title: "초기 상담 방문", description: "창업지원 프로그램 소개", type: "visit", date: "2026-05-05", time: "15:00", endTime: "16:00", isCompleted: false, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-24T10:00:00" },
+  { id: "sch-16", customerId: "cust-1", customerName: "김철수", title: "최종 결과 발표", type: "deadline", date: "2026-05-10", isCompleted: false, assigneeId: "user-2", assigneeName: "이대리", createdAt: "2026-04-24T11:00:00" },
 ];
 
 // ── 통계 계산 ──

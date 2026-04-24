@@ -149,6 +149,25 @@ export interface AlimtalkLog {
   resultCode?: string;
 }
 
+// ── 일정 ──
+export type ScheduleType = "meeting" | "call" | "deadline" | "visit" | "other";
+
+export interface Schedule {
+  id: string;
+  customerId: string;
+  customerName: string;
+  title: string;
+  description?: string;
+  type: ScheduleType;
+  date: string; // YYYY-MM-DD
+  time?: string; // HH:mm
+  endTime?: string;
+  isCompleted: boolean;
+  assigneeId: string;
+  assigneeName: string;
+  createdAt: string;
+}
+
 // ── 사용자 ──
 export type UserRole = "admin" | "manager" | "staff" | "viewer";
 

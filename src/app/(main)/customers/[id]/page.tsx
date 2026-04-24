@@ -25,7 +25,8 @@ import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ActivityTimeline } from "@/components/customers/activity-timeline";
-import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS } from "@/lib/mock-data";
+import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS, MOCK_SCHEDULES } from "@/lib/mock-data";
+import { ScheduleList } from "@/components/calendar/schedule-list";
 import { formatRelativeDate, getDaysAgo } from "@/lib/constants";
 
 export default function CustomerDetailPage({
@@ -53,6 +54,9 @@ export default function CustomerDetailPage({
   });
   const files = MOCK_FILES.filter((f) => f.customerId === id);
   const alimtalkLogs = MOCK_ALIMTALK_LOGS.filter((l) => l.customerId === id);
+  const schedules = MOCK_SCHEDULES.filter((s) => s.customerId === id);
+  const pastSchedules = schedules.filter((s) => s.date < new Date().toISOString().split("T")[0] || s.isCompleted).sort((a, b) => b.date.localeCompare(a.date));
+  const upcomingSchedules = schedules.filter((s) => s.date >= new Date().toISOString().split("T")[0] && !s.isCompleted).sort((a, b) => a.date.localeCompare(b.date));
   const daysAgo = getDaysAgo(customer.lastContactAt);
 
   return (
@@ -177,6 +181,7 @@ export default function CustomerDetailPage({
           <Tabs defaultValue="progress" className="space-y-4">
             <TabsList className="bg-muted/50 p-1 rounded-lg">
               <TabsTrigger value="progress" className="text-sm">진행현황</TabsTrigger>
+              <TabsTrigger value="schedule" className="text-sm">일정</TabsTrigger>
               <TabsTrigger value="timeline" className="text-sm">타임라인</TabsTrigger>
               <TabsTrigger value="tasks" className="text-sm">업무</TabsTrigger>
               <TabsTrigger value="memo" className="text-sm">메모</TabsTrigger>
@@ -269,6 +274,74 @@ export default function CustomerDetailPage({
                 <Plus className="w-4 h-4 mr-2" />
                 프로세스 추가
               </Button>
+            </TabsContent>
+
+            {/* 일정 */}
+            <TabsContent value="schedule" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">
+                  전체 일정 <span className="text-muted-foreground font-normal">{schedules.length}건</span>
+                </h3>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+                  <Plus className="w-3.5 h-3.5" />
+                  일정 추가
+                </Button>
+              </div>
+
+              {/* 예정 일정 */}
+              {upcomingSchedules.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-primary flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    다가오는 일정 ({upcomingSchedules.length})
+                  </h4>
+                  {upcomingSchedules.map((s) => (
+                    <Card key={s.id} className="rounded-xl border-primary/20 bg-primary/5">
+                      <CardContent className="p-3 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-primary font-medium">{s.date} {s.time && `${s.time}${s.endTime ? ` ~ ${s.endTime}` : ""}`}</span>
+                          <Badge variant="secondary" className="text-[10px]">{s.type === "meeting" ? "미팅" : s.type === "call" ? "전화" : s.type === "deadline" ? "기한" : s.type === "visit" ? "방문" : "기타"}</Badge>
+                        </div>
+                        <div className="text-sm font-medium text-foreground">{s.title}</div>
+                        {s.description && <div className="text-xs text-muted-foreground">{s.description}</div>}
+                        <div className="text-xs text-muted-foreground">담당: {s.assigneeName}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {/* 과거 일정 */}
+              {pastSchedules.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    지난 일정 ({pastSchedules.length})
+                  </h4>
+                  {pastSchedules.map((s) => (
+                    <Card key={s.id} className="rounded-xl opacity-70">
+                      <CardContent className="p-3 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">{s.date} {s.time || ""}</span>
+                          <Badge variant="secondary" className="text-[10px] bg-green-100 text-green-700">완료</Badge>
+                        </div>
+                        <div className="text-sm font-medium text-foreground line-through">{s.title}</div>
+                        {s.description && <div className="text-xs text-muted-foreground">{s.description}</div>}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {schedules.length === 0 && (
+                <Card className="rounded-xl border-dashed">
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Calendar className="w-10 h-10 mb-3 opacity-40" />
+                    <p className="text-sm mb-1">등록된 일정이 없습니다</p>
+                    <p className="text-xs">일정 추가 버튼으로 새 일정을 등록하세요</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* 타임라인 */}
