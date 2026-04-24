@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertTriangle, Phone, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { getDaysAgo, getUncontactedColor } from "@/lib/constants";
 import { getUncontactedCustomers } from "@/lib/mock-data";
 
 export function UncontactedCards() {
+  const router = useRouter();
   const customers = getUncontactedCustomers(7);
 
   return (
@@ -89,7 +91,10 @@ export function UncontactedCards() {
                         size="sm"
                         variant="outline"
                         className="flex-1 h-8 text-xs"
-                        onClick={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.location.href = `tel:${customer.phone}`;
+                        }}
                       >
                         <Phone className="w-3.5 h-3.5 mr-1" />
                         연락
@@ -98,7 +103,10 @@ export function UncontactedCards() {
                         size="sm"
                         variant="outline"
                         className="flex-1 h-8 text-xs"
-                        onClick={(e) => e.preventDefault()}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push("/alimtalk");
+                        }}
                       >
                         <MessageSquare className="w-3.5 h-3.5 mr-1" />
                         알림톡

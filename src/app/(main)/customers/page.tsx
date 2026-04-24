@@ -24,12 +24,14 @@ import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { MOCK_CUSTOMERS } from "@/lib/mock-data";
 import { formatRelativeDate } from "@/lib/constants";
+import { CustomerModal } from "@/components/modals/customer-modal";
 import type { CustomerGrade } from "@/types";
 
 export default function CustomersPage() {
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name");
+  const [customerModalOpen, setCustomerModalOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let result = [...MOCK_CUSTOMERS];
@@ -78,7 +80,7 @@ export default function CustomersPage() {
             전체 {MOCK_CUSTOMERS.length}명의 고객을 관리합니다
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setCustomerModalOpen(true)}>
           <Plus className="w-4 h-4" />
           고객 등록
         </Button>
@@ -184,12 +186,12 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <button className="p-1.5 hover:bg-accent rounded-md transition-colors" title="전화">
+                        <a href={`tel:${customer.phone}`} className="p-1.5 hover:bg-accent rounded-md transition-colors" title="전화">
                           <Phone className="w-4 h-4 text-muted-foreground" />
-                        </button>
-                        <button className="p-1.5 hover:bg-accent rounded-md transition-colors" title="이메일">
+                        </a>
+                        <a href={`mailto:${customer.email}`} className="p-1.5 hover:bg-accent rounded-md transition-colors" title="이메일">
                           <Mail className="w-4 h-4 text-muted-foreground" />
-                        </button>
+                        </a>
                       </div>
                     </td>
                   </tr>
@@ -205,6 +207,14 @@ export default function CustomersPage() {
           </div>
         )}
       </div>
+
+      <CustomerModal
+        open={customerModalOpen}
+        onOpenChange={setCustomerModalOpen}
+        onSubmit={(data) => {
+          alert(`고객 "${data.name}" 등록 완료 (Mock)`);
+        }}
+      />
     </div>
   );
 }

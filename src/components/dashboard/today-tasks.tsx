@@ -1,15 +1,27 @@
 "use client";
 
+import { useState } from "react";
 import { CheckSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { PRIORITY_COLORS } from "@/lib/constants";
 import { getTodayTasks } from "@/lib/mock-data";
+import type { Task } from "@/types";
 
 export function TodayTasks() {
-  const tasks = getTodayTasks();
+  const [tasks, setTasks] = useState<Task[]>(getTodayTasks());
   const completed = tasks.filter((t) => t.status === "completed").length;
+
+  function toggleTask(taskId: string) {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: t.status === "completed" ? "pending" : "completed" }
+          : t
+      )
+    );
+  }
 
   return (
     <Card className="rounded-xl border border-border">
@@ -34,7 +46,8 @@ export function TodayTasks() {
             >
               <Checkbox
                 checked={task.status === "completed"}
-                className="shrink-0"
+                onCheckedChange={() => toggleTask(task.id)}
+                className="shrink-0 cursor-pointer"
               />
               <div className="flex-1 min-w-0">
                 <div className={`text-sm ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"}`}>

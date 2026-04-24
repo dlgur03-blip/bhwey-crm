@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MiniCalendar } from "@/components/calendar/mini-calendar";
 import { ScheduleList } from "@/components/calendar/schedule-list";
+import { ScheduleModal } from "@/components/modals/schedule-modal";
 import { MOCK_SCHEDULES } from "@/lib/mock-data";
 
 function formatDateLabel(dateStr: string): string {
@@ -29,6 +30,7 @@ export function DashboardCalendar() {
   const today = new Date();
   const todayKey = today.toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState<string>(todayKey);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   const selectedSchedules = MOCK_SCHEDULES.filter((s) => s.date === selectedDate);
   const dateLabel = formatDateLabel(selectedDate);
@@ -38,7 +40,7 @@ export function DashboardCalendar() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">일정 캘린더</h2>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setScheduleModalOpen(true)}>
             <Plus className="w-3.5 h-3.5" />
             일정 추가
           </Button>
@@ -70,6 +72,15 @@ export function DashboardCalendar() {
           </div>
         </div>
       </CardContent>
+
+      <ScheduleModal
+        open={scheduleModalOpen}
+        onOpenChange={setScheduleModalOpen}
+        defaultDate={selectedDate}
+        onSubmit={(data) => {
+          alert(`일정 "${data.title}" 등록 완료 (Mock)`);
+        }}
+      />
     </Card>
   );
 }

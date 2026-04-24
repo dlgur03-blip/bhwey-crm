@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Search,
   Plus,
@@ -23,9 +23,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { MOCK_TASKS, MOCK_CUSTOMERS } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import type { Task } from "@/types";
 
 const PRIORITY_CONFIG = {
   high: { label: "긴급", color: "bg-red-100 text-red-800", icon: AlertTriangle },
@@ -44,6 +56,18 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+
+  const toggleTaskStatus = useCallback((taskId: string) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: t.status === "completed" ? "pending" : "completed" }
+          : t
+      )
+    );
+  }, []);
 
   const assignees = useMemo(() => {
     const set = new Map<string, string>();
@@ -52,7 +76,7 @@ export default function TasksPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    let result = [...MOCK_TASKS];
+    let result = [...tasks];
 
     if (search) {
       const q = search.toLowerCase();
@@ -83,13 +107,13 @@ export default function TasksPage() {
     });
 
     return result;
-  }, [search, statusFilter, priorityFilter, assigneeFilter]);
+  }, [search, statusFilter, priorityFilter, assigneeFilter, tasks]);
 
   const stats = {
-    total: MOCK_TASKS.length,
-    pending: MOCK_TASKS.filter((t) => t.status === "pending").length,
-    inProgress: MOCK_TASKS.filter((t) => t.status === "in_progress").length,
-    completed: MOCK_TASKS.filter((t) => t.status === "completed").length,
+    total: tasks.length,
+    pending: tasks.filter((t) => t.status === "pending").length,
+    inProgress: tasks.filter((t) => t.status === "in_progress").length,
+    completed: tasks.filter((t) => t.status === "completed").length,
   };
 
   const statusLabels: Record<string, string> = {
@@ -116,7 +140,7 @@ export default function TasksPage() {
             전체 {stats.total}건 · 대기 {stats.pending} · 진행중 {stats.inProgress} · 완료 {stats.completed}
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setTaskModalOpen(true)}>
           <Plus className="w-4 h-4" />
           업무 추가
         </Button>
@@ -189,7 +213,10 @@ export default function TasksPage() {
             <Card key={task.id} className={cn("rounded-xl", task.status === "completed" && "opacity-60")}>
               <CardContent className="p-4 flex items-start gap-3">
                 {/* 체크 아이콘 */}
-                <button className={cn("mt-0.5 shrink-0", status.color)}>
+                <button
+                  className={cn("mt-0.5 shrink-0 hover:scale-110 transition-transform", status.color)}
+                  onClick={() => toggleTaskStatus(task.id)}
+                >
                   {task.status === "completed" ? (
                     <CheckCircle2 className="w-5 h-5" />
                   ) : (
@@ -243,7 +270,107 @@ export default function TasksPage() {
           </div>
         )}
       </div>
+
+      {/* 업무 추가 모달 */}
+      <TaskAddModal
+        open={taskModalOpen}
+        onOpenChange={setTaskModalOpen}
+        onSubmit={(data) => {
+          const newTask: Task = {
+            id: `task-${Date.now()}`,
+            title: data.title,
+            description: data.description,
+            customerId: data.customerId || undefined,
+            customerName: data.customerId
+              ? MOCK_CUSTOMERS.find((c) => c.id === data.customerId)?.name
+              : undefined,
+            assigneeId: "user-1",
+            assigneeName: "박팀장",
+            dueDate: data.dueDate,
+            priority: data.priority as Task["priority"],
+            status: "pending",
+            createdAt: new Date().toISOString(),
+          };
+          setTasks((prev) => [newTask, ...prev]);
+        }}
+      />
     </div>
+  );
+}
+
+function TaskAddModal({
+  open,
+  onOpenChange,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: { title: string; description: string; dueDate: string; priority: string; customerId: string }) => void;
+}) {
+  const today = new Date().toISOString().split("T")[0];
+  const [form, setForm] = useState({ title: "", description: "", dueDate: today, priority: "medium", customerId: "" });
+  const [error, setError] = useState("");
+
+  function handleSubmit() {
+    if (!form.title.trim()) { setError("제목을 입력해주세요"); return; }
+    onSubmit(form);
+    onOpenChange(false);
+    setForm({ title: "", description: "", dueDate: today, priority: "medium", customerId: "" });
+    setError("");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>업무 추가</DialogTitle>
+          <DialogDescription>새로운 업무를 등록합니다</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="task-title">제목 <span className="text-red-500">*</span></Label>
+            <Input id="task-title" value={form.title} onChange={(e) => { setForm(f => ({ ...f, title: e.target.value })); setError(""); }} placeholder="업무 제목" />
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>우선순위</Label>
+              <Select value={form.priority} onValueChange={(v) => setForm(f => ({ ...f, priority: v ?? "medium" }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">긴급</SelectItem>
+                  <SelectItem value="medium">보통</SelectItem>
+                  <SelectItem value="low">낮음</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="task-due">마감일</Label>
+              <Input id="task-due" type="date" value={form.dueDate} onChange={(e) => setForm(f => ({ ...f, dueDate: e.target.value }))} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>관련 고객</Label>
+            <Select value={form.customerId} onValueChange={(v) => setForm(f => ({ ...f, customerId: v ?? "" }))}>
+              <SelectTrigger><SelectValue placeholder="선택 (선택사항)" /></SelectTrigger>
+              <SelectContent>
+                {MOCK_CUSTOMERS.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name} ({c.company})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="task-desc">설명</Label>
+            <Textarea id="task-desc" value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="업무 내용을 입력하세요" rows={3} />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
+          <Button onClick={handleSubmit}>등록</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
