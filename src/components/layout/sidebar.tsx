@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Users,
@@ -35,6 +36,7 @@ const bottomMenu = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isOpen, close } = useSidebar();
 
   return (
@@ -114,7 +116,12 @@ export function Sidebar() {
               </Link>
             );
           })}
-          <button onClick={() => alert("로그아웃 기능은 준비 중입니다")} className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-accent transition-colors">
+          <button onClick={async () => {
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            router.push("/login");
+            router.refresh();
+          }} className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-accent transition-colors">
             <LogOut className="w-5 h-5 shrink-0" />
             로그아웃
           </button>
