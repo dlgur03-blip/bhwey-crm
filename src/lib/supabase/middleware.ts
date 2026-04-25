@@ -4,6 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const { pathname } = request.nextUrl;
+
+  // OAuth 콜백 경로는 미들웨어에서 세션 체크하지 않음
+  // getUser()가 PKCE code_verifier 쿠키를 소비할 수 있으므로 스킵
+  if (pathname.startsWith("/auth/callback")) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -28,8 +36,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // 로그인 안 된 상태에서 보호된 경로 접근 시 → 로그인 페이지로
   const isProtectedRoute =
