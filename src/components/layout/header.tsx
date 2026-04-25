@@ -6,28 +6,18 @@ import { Menu, Search, Bell, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "@/stores/use-sidebar";
+import { useProfile } from "@/stores/use-profile";
 import { MOCK_CUSTOMERS, MOCK_TASKS } from "@/lib/mock-data";
 import { GradeBadge } from "@/components/common/grade-badge";
-import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { ROLE_LABELS } from "@/lib/constants";
 
 export function Header() {
   const { toggle } = useSidebar();
+  const { profile } = useProfile();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-
-  // 유저 정보 로드
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   // 외부 클릭 닫기
   useEffect(() => {
@@ -171,16 +161,23 @@ export function Header() {
         {/* 프로필 */}
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
-            {user?.user_metadata?.avatar_url && (
-              <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name || ""} />
+            {profile?.profileImg && (
+              <AvatarImage src={profile.profileImg} alt={profile.name} />
             )}
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-              {(user?.user_metadata?.full_name || user?.email || "U")[0]}
+              {(profile?.name || "U")[0]}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden md:block text-sm font-medium text-foreground">
-            {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "사용자"}
-          </span>
+          <div className="hidden md:flex flex-col">
+            <span className="text-sm font-medium text-foreground leading-tight">
+              {profile?.name || "사용자"}
+            </span>
+            {profile?.role && (
+              <span className="text-[10px] text-muted-foreground leading-tight">
+                {ROLE_LABELS[profile.role]}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </header>
