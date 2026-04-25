@@ -38,7 +38,7 @@ import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ActivityTimeline } from "@/components/customers/activity-timeline";
 import { CustomerModal } from "@/components/modals/customer-modal";
 import { ScheduleModal } from "@/components/modals/schedule-modal";
-import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS, MOCK_SCHEDULES } from "@/lib/mock-data";
+import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS, MOCK_SCHEDULES, MOCK_TEMPLATES } from "@/lib/mock-data";
 import { ScheduleList } from "@/components/calendar/schedule-list";
 import { formatRelativeDate, getDaysAgo } from "@/lib/constants";
 
@@ -56,6 +56,8 @@ export default function CustomerDetailPage({
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [noteInput, setNoteInput] = useState("");
+  const [processModalOpen, setProcessModalOpen] = useState(false);
+  const [fileUploadOpen, setFileUploadOpen] = useState(false);
 
   if (!customer) {
     return (
@@ -222,7 +224,7 @@ export default function CustomerDetailPage({
                 <Card className="rounded-xl border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <p className="text-sm mb-3">진행 중인 프로세스가 없습니다</p>
-                    <Button variant="outline" size="sm" onClick={() => alert("프로세스 추가 기능은 준비 중입니다")}>
+                    <Button variant="outline" size="sm" onClick={() => setProcessModalOpen(true)}>
                       <Plus className="w-4 h-4 mr-1" />
                       프로세스 추가
                     </Button>
@@ -297,7 +299,7 @@ export default function CustomerDetailPage({
                   </Card>
                 ))
               )}
-              <Button variant="outline" className="w-full" onClick={() => alert("프로세스 추가 기능은 준비 중입니다")}>
+              <Button variant="outline" className="w-full" onClick={() => setProcessModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 프로세스 추가
               </Button>
@@ -491,7 +493,15 @@ export default function CustomerDetailPage({
                         variant="ghost"
                         size="sm"
                         className="text-primary shrink-0"
-                        onClick={() => alert(`"${file.name}" 다운로드 기능은 준비 중입니다`)}
+                        onClick={() => {
+                          const blob = new Blob(["(Mock 파일 내용)"], { type: "application/octet-stream" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = file.name;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
                       >
                         다운로드
                       </Button>
@@ -499,7 +509,7 @@ export default function CustomerDetailPage({
                   </Card>
                 ))
               )}
-              <Button variant="outline" className="w-full" onClick={() => alert("파일 업로드 기능은 준비 중입니다")}>
+              <Button variant="outline" className="w-full" onClick={() => setFileUploadOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 파일 업로드
               </Button>
@@ -629,6 +639,74 @@ export default function CustomerDetailPage({
             >
               저장
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 프로세스 추가 모달 */}
+      <Dialog open={processModalOpen} onOpenChange={setProcessModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>프로세스 추가</DialogTitle>
+            <DialogDescription>{customer.name} 고객에게 적용할 프로세스 템플릿을 선택하세요</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            {MOCK_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 text-left transition-colors"
+                onClick={() => {
+                  alert(`"${tpl.name}" 프로세스가 추가되었습니다 (Mock)`);
+                  setProcessModalOpen(false);
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
+                  style={{ backgroundColor: tpl.color }}
+                >
+                  {tpl.name[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-foreground">{tpl.name}</div>
+                  <div className="text-xs text-muted-foreground">{tpl.description}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{tpl.stages.length}단계</div>
+                </div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 파일 업로드 모달 */}
+      <Dialog open={fileUploadOpen} onOpenChange={setFileUploadOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>파일 업로드</DialogTitle>
+            <DialogDescription>{customer.name} 고객 관련 파일을 첨부합니다</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+              <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+              <span className="text-sm text-muted-foreground">파일을 선택하세요</span>
+              <span className="text-xs text-muted-foreground mt-1">PDF, DOCX, XLSX, 이미지 등</span>
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    alert(`"${file.name}" 업로드 완료 (Mock)`);
+                    setFileUploadOpen(false);
+                  }
+                }}
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>

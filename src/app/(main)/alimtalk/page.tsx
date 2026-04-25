@@ -16,6 +16,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -47,6 +57,9 @@ export default function AlimtalkPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [sendCustomer, setSendCustomer] = useState("");
   const [activeTab, setActiveTab] = useState("templates");
+  const [tplModalOpen, setTplModalOpen] = useState(false);
+  const [editingTpl, setEditingTpl] = useState<typeof MOCK_ALIMTALK_TEMPLATES[0] | null>(null);
+  const [tplForm, setTplForm] = useState({ title: "", templateCode: "", content: "", variables: "" });
 
   const filteredLogs = MOCK_ALIMTALK_LOGS.filter((log) => {
     if (logSearch) {
@@ -132,7 +145,11 @@ export default function AlimtalkPage() {
             <span className="text-sm font-medium text-foreground">
               등록된 템플릿 {MOCK_ALIMTALK_TEMPLATES.length}개
             </span>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => alert("템플릿 등록 기능은 준비 중입니다")}>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+              setEditingTpl(null);
+              setTplForm({ title: "", templateCode: "", content: "", variables: "" });
+              setTplModalOpen(true);
+            }}>
               <Plus className="w-4 h-4" />
               템플릿 등록
             </Button>
@@ -164,7 +181,16 @@ export default function AlimtalkPage() {
                     ))}
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => alert(`"${tpl.title}" 템플릿 수정 기능은 준비 중입니다`)}>수정</Button>
+                    <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => {
+                      setEditingTpl(tpl);
+                      setTplForm({
+                        title: tpl.title,
+                        templateCode: tpl.templateCode,
+                        content: tpl.content,
+                        variables: tpl.variables.join(", "),
+                      });
+                      setTplModalOpen(true);
+                    }}>수정</Button>
                     <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive" onClick={() => { if (confirm(`"${tpl.title}" 템플릿을 삭제하시겠습니까?`)) alert("템플릿이 삭제되었습니다 (Mock)"); }}>삭제</Button>
                   </div>
                 </div>
@@ -333,6 +359,72 @@ export default function AlimtalkPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* 템플릿 등록/수정 모달 */}
+      <Dialog open={tplModalOpen} onOpenChange={setTplModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingTpl ? "템플릿 수정" : "템플릿 등록"}</DialogTitle>
+            <DialogDescription>
+              {editingTpl ? `"${editingTpl.title}" 템플릿을 수정합니다` : "새 알림톡 템플릿을 등록합니다"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">템플릿명</label>
+                <Input
+                  value={tplForm.title}
+                  onChange={(e) => setTplForm({ ...tplForm, title: e.target.value })}
+                  placeholder="예: 접수 완료 안내"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">템플릿 코드</label>
+                <Input
+                  value={tplForm.templateCode}
+                  onChange={(e) => setTplForm({ ...tplForm, templateCode: e.target.value })}
+                  placeholder="예: TPL-005"
+                  className="font-mono"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">메시지 내용</label>
+              <Textarea
+                value={tplForm.content}
+                onChange={(e) => setTplForm({ ...tplForm, content: e.target.value })}
+                placeholder={"[BH WEY] #{고객명}님, 안녕하세요.\n메시지 내용을 입력하세요."}
+                rows={5}
+                className="font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">변수 (쉼표 구분)</label>
+              <Input
+                value={tplForm.variables}
+                onChange={(e) => setTplForm({ ...tplForm, variables: e.target.value })}
+                placeholder="고객명, 프로세스명, 담당자명"
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">메시지 본문에서 {"#{변수명}"} 형태로 사용됩니다</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
+            <Button onClick={() => {
+              if (!tplForm.title || !tplForm.content) {
+                alert("템플릿명과 메시지 내용을 입력해주세요");
+                return;
+              }
+              alert(`템플릿 "${tplForm.title}" ${editingTpl ? "수정" : "등록"} 완료 (Mock)`);
+              setTplModalOpen(false);
+            }}>
+              {editingTpl ? "수정" : "등록"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

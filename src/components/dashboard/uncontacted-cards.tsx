@@ -93,7 +93,12 @@ export function UncontactedCards() {
                         className="flex-1 h-8 text-xs"
                         onClick={(e) => {
                           e.preventDefault();
-                          window.location.href = `tel:${customer.phone}`;
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(customer.phone).then(() => {
+                            alert(`${customer.phone} 복사됨`);
+                          }).catch(() => {
+                            window.prompt("전화번호:", customer.phone);
+                          });
                         }}
                       >
                         <Phone className="w-3.5 h-3.5 mr-1" />
