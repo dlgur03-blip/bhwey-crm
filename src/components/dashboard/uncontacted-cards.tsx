@@ -49,7 +49,7 @@ export function UncontactedCards() {
 
             return (
               <Link key={customer.id} href={`/customers/${customer.id}`}>
-                <Card className="rounded-xl border border-border hover:shadow-md transition-shadow cursor-pointer h-full">
+                <Card className="rounded-xl border border-border/60 cursor-pointer h-full card-hover">
                   <CardContent className="p-5 flex flex-col gap-3">
                     {/* 상단: 이름 + 등급 */}
                     <div className="flex items-start justify-between">

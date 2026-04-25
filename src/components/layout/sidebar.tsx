@@ -50,14 +50,14 @@ export function Sidebar() {
       {/* 사이드바 */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar border-r border-sidebar-border transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-gradient-to-b from-sidebar to-white border-r border-sidebar-border/60 transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* 로고 */}
         <div className="flex h-16 items-center justify-between px-6 border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-700 text-white text-sm font-bold shadow-md shadow-primary/20">
               BH
             </div>
             <div>
@@ -80,13 +80,13 @@ export function Sidebar() {
                 href={item.href}
                 onClick={close}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
                   isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-sidebar-foreground hover:bg-accent"
+                    ? "bg-primary/10 text-primary font-medium sidebar-active-bar shadow-sm"
+                    : "text-sidebar-foreground hover:bg-accent/80 hover:translate-x-0.5"
                 )}
               >
-                <item.icon className="w-5 h-5 shrink-0" />
+                <item.icon className={cn("w-5 h-5 shrink-0 transition-transform", isActive && "scale-110")} />
                 {item.label}
               </Link>
             );
@@ -94,7 +94,7 @@ export function Sidebar() {
         </nav>
 
         {/* 하단 메뉴 */}
-        <div className="px-3 py-4 border-t border-sidebar-border space-y-1">
+        <div className="px-3 py-4 border-t border-sidebar-border/60 space-y-1">
           {bottomMenu.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -103,10 +103,10 @@ export function Sidebar() {
                 href={item.href}
                 onClick={close}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
                   isActive
-                    ? "bg-primary/10 text-primary font-medium"
-                    : "text-sidebar-foreground hover:bg-accent"
+                    ? "bg-primary/10 text-primary font-medium sidebar-active-bar"
+                    : "text-sidebar-foreground hover:bg-accent/80"
                 )}
               >
                 <item.icon className="w-5 h-5 shrink-0" />

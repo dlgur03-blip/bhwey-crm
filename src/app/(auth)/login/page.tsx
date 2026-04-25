@@ -35,14 +35,14 @@ export default function LoginPage() {
     <div className="w-full max-w-[420px]">
       {/* 로고 */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-white text-xl font-bold mb-4">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-700 text-white text-xl font-bold mb-4 shadow-lg shadow-primary/25">
           BH
         </div>
         <h1 className="text-2xl font-bold text-foreground">BH WEY 고객관리</h1>
         <p className="text-sm text-muted-foreground mt-1">계정에 로그인하세요</p>
       </div>
 
-      <Card className="border-border/50 shadow-lg">
+      <Card className="border-border/40 shadow-xl shadow-black/[0.03] glass">
         <CardHeader className="pb-2">
           <h2 className="text-lg font-semibold text-foreground">로그인</h2>
         </CardHeader>
