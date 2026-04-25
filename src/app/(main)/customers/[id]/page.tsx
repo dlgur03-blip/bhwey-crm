@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -38,7 +38,9 @@ import { ContactDaysBadge } from "@/components/common/contact-days-badge";
 import { ActivityTimeline } from "@/components/customers/activity-timeline";
 import { CustomerModal } from "@/components/modals/customer-modal";
 import { ScheduleModal } from "@/components/modals/schedule-modal";
-import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS, MOCK_SCHEDULES, MOCK_TEMPLATES } from "@/lib/mock-data";
+import { MOCK_CUSTOMERS, MOCK_ACTIVITIES, MOCK_TASKS, MOCK_NOTES, MOCK_FILES, MOCK_ALIMTALK_LOGS, MOCK_SCHEDULES } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/client";
+import type { CustomerProcess } from "@/types";
 import { ScheduleList } from "@/components/calendar/schedule-list";
 import { formatRelativeDate, getDaysAgo } from "@/lib/constants";
 
@@ -58,6 +60,74 @@ export default function CustomerDetailPage({
   const [noteInput, setNoteInput] = useState("");
   const [processModalOpen, setProcessModalOpen] = useState(false);
   const [fileUploadOpen, setFileUploadOpen] = useState(false);
+
+  // Supabase 연동: 템플릿 + 고객 프로세스
+  interface DbTplRow { id: string; name: string; description: string; color: string; stages: { id: string; stage_order: number; name: string; checklist: string[] }[] }
+  const [dbTemplates, setDbTemplates] = useState<DbTplRow[]>([]);
+  const [dbProcesses, setDbProcesses] = useState<CustomerProcess[]>([]);
+  const [addingProcess, setAddingProcess] = useState(false);
+
+  const loadDbData = useCallback(async () => {
+    const supabase = createClient();
+    // 템플릿 + 단계 로드
+    const { data: tpls } = await supabase.from("process_templates").select("*").order("created_at");
+    const { data: stages } = await supabase.from("template_stages").select("*").order("stage_order");
+    if (tpls) {
+      setDbTemplates(tpls.map((t: Record<string, unknown>) => ({
+        ...t,
+        stages: (stages || []).filter((s: Record<string, unknown>) => s.template_id === t.id),
+      })) as DbTplRow[]);
+    }
+    // 이 고객의 프로세스 로드
+    const { data: procs } = await supabase
+      .from("customer_processes")
+      .select("*")
+      .eq("customer_id", id)
+      .order("created_at");
+    if (procs) {
+      setDbProcesses(procs.map((p: Record<string, unknown>) => ({
+        id: p.id as string,
+        customerId: p.customer_id as string,
+        templateId: p.template_id as string,
+        templateName: p.template_name as string,
+        currentStageOrder: p.current_stage_order as number,
+        totalStages: p.total_stages as number,
+        currentStageName: p.current_stage_name as string,
+        status: p.status as CustomerProcess["status"],
+        startedAt: p.started_at as string,
+        completedAt: p.completed_at as string | undefined,
+        checklistStatus: (p.checklist_status || {}) as Record<string, boolean>,
+      })));
+    }
+  }, [id]);
+
+  useEffect(() => { loadDbData(); }, [loadDbData]);
+
+  async function handleAddProcess(tpl: DbTplRow) {
+    setAddingProcess(true);
+    const supabase = createClient();
+    const firstStage = tpl.stages[0];
+    const initialChecklist: Record<string, boolean> = {};
+    if (firstStage) {
+      firstStage.checklist.forEach((item: string) => { initialChecklist[item] = false; });
+    }
+    await supabase.from("customer_processes").insert({
+      customer_id: id,
+      template_id: tpl.id,
+      template_name: tpl.name,
+      current_stage_order: 1,
+      total_stages: tpl.stages.length,
+      current_stage_name: firstStage?.name || tpl.name,
+      status: "in_progress",
+      checklist_status: initialChecklist,
+    });
+    setAddingProcess(false);
+    setProcessModalOpen(false);
+    loadDbData();
+  }
+
+  // mock 프로세스 + DB 프로세스 합치기
+  const allProcesses = [...(customer?.processes || []), ...dbProcesses];
 
   if (!customer) {
     return (
@@ -220,7 +290,7 @@ export default function CustomerDetailPage({
 
             {/* 진행현황 */}
             <TabsContent value="progress" className="space-y-4">
-              {customer.processes.length === 0 ? (
+              {allProcesses.length === 0 ? (
                 <Card className="rounded-xl border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <p className="text-sm mb-3">진행 중인 프로세스가 없습니다</p>
@@ -231,7 +301,7 @@ export default function CustomerDetailPage({
                   </CardContent>
                 </Card>
               ) : (
-                customer.processes.map((proc) => (
+                allProcesses.map((proc) => (
                   <Card key={proc.id} className="rounded-xl">
                     <CardContent className="p-5 space-y-4">
                       <div className="flex items-center justify-between">
@@ -651,28 +721,32 @@ export default function CustomerDetailPage({
             <DialogDescription>{customer.name} 고객에게 적용할 프로세스 템플릿을 선택하세요</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            {MOCK_TEMPLATES.map((tpl) => (
-              <button
-                key={tpl.id}
-                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 text-left transition-colors"
-                onClick={() => {
-                  alert(`"${tpl.name}" 프로세스가 추가되었습니다 (Mock)`);
-                  setProcessModalOpen(false);
-                }}
-              >
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
-                  style={{ backgroundColor: tpl.color }}
+            {dbTemplates.length === 0 ? (
+              <div className="text-center py-6 text-sm text-muted-foreground">
+                등록된 템플릿이 없습니다. 먼저 템플릿을 추가해주세요.
+              </div>
+            ) : (
+              dbTemplates.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 text-left transition-colors disabled:opacity-50"
+                  onClick={() => handleAddProcess(tpl)}
+                  disabled={addingProcess}
                 >
-                  {tpl.name[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-foreground">{tpl.name}</div>
-                  <div className="text-xs text-muted-foreground">{tpl.description}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{tpl.stages.length}단계</div>
-                </div>
-              </button>
-            ))}
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
+                    style={{ backgroundColor: tpl.color }}
+                  >
+                    {tpl.name[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-foreground">{tpl.name}</div>
+                    <div className="text-xs text-muted-foreground">{tpl.description}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{tpl.stages.length}단계</div>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>취소</DialogClose>

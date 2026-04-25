@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Kanban, List, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,20 +11,45 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { KanbanBoard } from "@/components/pipeline/kanban-board";
-import { MOCK_TEMPLATES, MOCK_CUSTOMERS } from "@/lib/mock-data";
+import { MOCK_CUSTOMERS } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/client";
 import { GradeBadge } from "@/components/common/grade-badge";
 import { ProgressBar } from "@/components/common/progress-bar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { CustomerGrade } from "@/types";
 
+interface DbPipelineTemplate {
+  id: string;
+  name: string;
+  color: string;
+  stages: { id: string; stage_order: number; name: string; checklist: string[] }[];
+}
+
 export default function PipelinePage() {
-  const [templateId, setTemplateId] = useState(MOCK_TEMPLATES[0].id);
+  const [dbTemplates, setDbTemplates] = useState<DbPipelineTemplate[]>([]);
+  const [templateId, setTemplateId] = useState<string>("");
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
 
-  const template = MOCK_TEMPLATES.find((t) => t.id === templateId);
+  const loadTemplates = useCallback(async () => {
+    const supabase = createClient();
+    const { data: tpls } = await supabase.from("process_templates").select("*").order("created_at");
+    const { data: stages } = await supabase.from("template_stages").select("*").order("stage_order");
+    if (tpls) {
+      const merged = tpls.map((t: Record<string, unknown>) => ({
+        ...t,
+        stages: (stages || []).filter((s: Record<string, unknown>) => s.template_id === t.id),
+      })) as DbPipelineTemplate[];
+      setDbTemplates(merged);
+      if (merged.length > 0 && !templateId) setTemplateId(merged[0].id);
+    }
+  }, []);
+
+  useEffect(() => { loadTemplates(); }, [loadTemplates]);
+
+  const template = dbTemplates.find((t) => t.id === templateId);
 
   // 담당자 목록 추출
   const assignees = useMemo(() => {
@@ -76,7 +101,7 @@ export default function PipelinePage() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {MOCK_TEMPLATES.map((t) => (
+              {dbTemplates.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   <div className="flex items-center gap-2">
                     <div

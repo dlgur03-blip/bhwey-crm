@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   ChevronDown,
@@ -9,6 +9,7 @@ import {
   Trash2,
   CheckCircle,
   Save,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,17 +25,147 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { MOCK_TEMPLATES } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+
+interface DbStage {
+  id: string;
+  template_id: string;
+  stage_order: number;
+  name: string;
+  description: string;
+  checklist: string[];
+}
+
+interface DbTemplate {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  is_default: boolean;
+  created_at: string;
+  stages: DbStage[];
+}
 
 export default function TemplatesPage() {
-  const [expanded, setExpanded] = useState<string | null>(MOCK_TEMPLATES[0]?.id ?? null);
+  const [templates, setTemplates] = useState<DbTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingTpl, setEditingTpl] = useState<typeof MOCK_TEMPLATES[0] | null>(null);
+  const [editingTpl, setEditingTpl] = useState<DbTemplate | null>(null);
   const [form, setForm] = useState({ name: "", description: "", color: "#2563EB" });
+  const [saving, setSaving] = useState(false);
+
+  // 단계 추가 모달
+  const [stageModalOpen, setStageModalOpen] = useState(false);
+  const [stageTargetTplId, setStageTargetTplId] = useState<string | null>(null);
+  const [stageForm, setStageForm] = useState({ name: "", description: "", checklist: "" });
+  const [savingStage, setSavingStage] = useState(false);
+
+  const loadTemplates = useCallback(async () => {
+    const supabase = createClient();
+    const { data: tplData } = await supabase
+      .from("process_templates")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (!tplData) { setLoading(false); return; }
+
+    const { data: stageData } = await supabase
+      .from("template_stages")
+      .select("*")
+      .order("stage_order", { ascending: true });
+
+    const merged: DbTemplate[] = tplData.map((t) => ({
+      ...t,
+      stages: (stageData || []).filter((s) => s.template_id === t.id),
+    }));
+
+    setTemplates(merged);
+    if (!expanded && merged.length > 0) setExpanded(merged[0].id);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadTemplates(); }, [loadTemplates]);
 
   function toggleExpand(id: string) {
     setExpanded(expanded === id ? null : id);
+  }
+
+  // 템플릿 저장 (추가/수정)
+  async function handleSave() {
+    if (!form.name) return;
+    setSaving(true);
+    const supabase = createClient();
+
+    if (editingTpl) {
+      await supabase
+        .from("process_templates")
+        .update({ name: form.name, description: form.description, color: form.color })
+        .eq("id", editingTpl.id);
+    } else {
+      await supabase
+        .from("process_templates")
+        .insert({ name: form.name, description: form.description, color: form.color });
+    }
+
+    setSaving(false);
+    setModalOpen(false);
+    loadTemplates();
+  }
+
+  // 템플릿 삭제
+  async function handleDelete(tpl: DbTemplate) {
+    if (!confirm(`"${tpl.name}" 템플릿을 삭제하시겠습니까?`)) return;
+    const supabase = createClient();
+    await supabase.from("process_templates").delete().eq("id", tpl.id);
+    loadTemplates();
+  }
+
+  // 단계 추가
+  async function handleAddStage() {
+    if (!stageForm.name || !stageTargetTplId) return;
+    setSavingStage(true);
+    const supabase = createClient();
+
+    // 현재 최대 order 구하기
+    const tpl = templates.find((t) => t.id === stageTargetTplId);
+    const maxOrder = tpl?.stages.reduce((max, s) => Math.max(max, s.stage_order), 0) ?? 0;
+
+    const checklist = stageForm.checklist
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    await supabase.from("template_stages").insert({
+      template_id: stageTargetTplId,
+      stage_order: maxOrder + 1,
+      name: stageForm.name,
+      description: stageForm.description,
+      checklist,
+    });
+
+    setSavingStage(false);
+    setStageModalOpen(false);
+    setStageForm({ name: "", description: "", checklist: "" });
+    loadTemplates();
+  }
+
+  // 단계 삭제
+  async function handleDeleteStage(stageId: string) {
+    if (!confirm("이 단계를 삭제하시겠습니까?")) return;
+    const supabase = createClient();
+    await supabase.from("template_stages").delete().eq("id", stageId);
+    loadTemplates();
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -44,7 +175,7 @@ export default function TemplatesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">프로세스 템플릿</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            재사용 가능한 프로세스 템플릿을 관리합니다 ({MOCK_TEMPLATES.length}개)
+            재사용 가능한 프로세스 템플릿을 관리합니다 ({templates.length}개)
           </p>
         </div>
         <Button
@@ -62,8 +193,9 @@ export default function TemplatesPage() {
 
       {/* 템플릿 카드 목록 */}
       <div className="space-y-4">
-        {MOCK_TEMPLATES.map((tpl) => {
+        {templates.map((tpl) => {
           const isExpanded = expanded === tpl.id;
+          const totalChecklist = tpl.stages.reduce((sum, s) => sum + s.checklist.length, 0);
           return (
             <Card key={tpl.id} className="rounded-xl overflow-hidden">
               {/* 카드 헤더 */}
@@ -80,7 +212,7 @@ export default function TemplatesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-base font-semibold text-foreground">{tpl.name}</h3>
-                    {tpl.isDefault && (
+                    {tpl.is_default && (
                       <Badge variant="secondary" className="text-[10px]">기본</Badge>
                     )}
                   </div>
@@ -88,7 +220,7 @@ export default function TemplatesPage() {
                   <div className="flex items-center gap-2 mt-1.5">
                     <Badge variant="outline" className="text-xs">{tpl.stages.length}단계</Badge>
                     <span className="text-xs text-muted-foreground">
-                      총 체크리스트 {tpl.stages.reduce((sum, s) => sum + s.checklist.length, 0)}개
+                      총 체크리스트 {totalChecklist}개
                     </span>
                   </div>
                 </div>
@@ -113,9 +245,7 @@ export default function TemplatesPage() {
                     className="text-xs h-7 text-destructive"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`"${tpl.name}" 템플릿을 삭제하시겠습니까?`)) {
-                        alert("템플릿이 삭제되었습니다 (Mock)");
-                      }
+                      handleDelete(tpl);
                     }}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -133,31 +263,39 @@ export default function TemplatesPage() {
                 <CardContent className="px-5 pb-5 pt-0">
                   <div className="border-t border-border pt-4">
                     {/* 프로그레스 바 */}
-                    <div className="flex gap-1 mb-4">
-                      {tpl.stages.map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-2 flex-1 rounded-full"
-                          style={{ backgroundColor: tpl.color, opacity: 0.3 + (i / tpl.stages.length) * 0.7 }}
-                        />
-                      ))}
-                    </div>
+                    {tpl.stages.length > 0 && (
+                      <div className="flex gap-1 mb-4">
+                        {tpl.stages.map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-2 flex-1 rounded-full"
+                            style={{ backgroundColor: tpl.color, opacity: 0.3 + (i / tpl.stages.length) * 0.7 }}
+                          />
+                        ))}
+                      </div>
+                    )}
 
                     {/* 단계 목록 */}
                     <div className="space-y-3">
                       {tpl.stages.map((stage) => (
-                        <div key={stage.id} className="flex gap-3">
-                          {/* 단계 번호 */}
+                        <div key={stage.id} className="flex gap-3 group">
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5"
                             style={{ backgroundColor: tpl.color }}
                           >
-                            {stage.order}
+                            {stage.stage_order}
                           </div>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-foreground">{stage.name}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-foreground">{stage.name}</span>
+                              <button
+                                onClick={() => handleDeleteStage(stage.id)}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/10 rounded text-destructive transition-opacity"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                             <div className="text-xs text-muted-foreground mt-0.5">{stage.description}</div>
-                            {/* 체크리스트 */}
                             <div className="flex flex-wrap gap-1.5 mt-2">
                               {stage.checklist.map((item) => (
                                 <span
@@ -173,6 +311,21 @@ export default function TemplatesPage() {
                         </div>
                       ))}
                     </div>
+
+                    {/* 단계 추가 버튼 */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-4 gap-1.5 text-xs"
+                      onClick={() => {
+                        setStageTargetTplId(tpl.id);
+                        setStageForm({ name: "", description: "", checklist: "" });
+                        setStageModalOpen(true);
+                      }}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      단계 추가
+                    </Button>
                   </div>
                 </CardContent>
               )}
@@ -180,6 +333,26 @@ export default function TemplatesPage() {
           );
         })}
       </div>
+
+      {templates.length === 0 && !loading && (
+        <Card className="rounded-xl border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <p className="text-sm mb-3">등록된 템플릿이 없습니다</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditingTpl(null);
+                setForm({ name: "", description: "", color: "#2563EB" });
+                setModalOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              첫 번째 템플릿 만들기
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 템플릿 추가/수정 모달 */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
@@ -238,19 +411,56 @@ export default function TemplatesPage() {
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
-            <Button
-              className="gap-1.5"
-              onClick={() => {
-                if (!form.name) {
-                  alert("템플릿명을 입력해주세요");
-                  return;
-                }
-                alert(`템플릿 "${form.name}" ${editingTpl ? "수정" : "등록"} 완료 (Mock)`);
-                setModalOpen(false);
-              }}
-            >
+            <Button className="gap-1.5" onClick={handleSave} disabled={saving || !form.name}>
               <Save className="w-4 h-4" />
-              {editingTpl ? "수정" : "등록"}
+              {saving ? "저장 중..." : editingTpl ? "수정" : "등록"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 단계 추가 모달 */}
+      <Dialog open={stageModalOpen} onOpenChange={setStageModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>단계 추가</DialogTitle>
+            <DialogDescription>
+              새로운 단계를 추가합니다. 체크리스트는 콤마(,)로 구분하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">단계명</label>
+              <Input
+                value={stageForm.name}
+                onChange={(e) => setStageForm({ ...stageForm, name: e.target.value })}
+                placeholder="예: 서류 준비"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">설명</label>
+              <Input
+                value={stageForm.description}
+                onChange={(e) => setStageForm({ ...stageForm, description: e.target.value })}
+                placeholder="이 단계에서 수행할 작업 설명"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">체크리스트</label>
+              <Textarea
+                value={stageForm.checklist}
+                onChange={(e) => setStageForm({ ...stageForm, checklist: e.target.value })}
+                placeholder="항목1, 항목2, 항목3"
+                rows={2}
+              />
+              <p className="text-xs text-muted-foreground">콤마(,)로 구분하여 입력</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>취소</DialogClose>
+            <Button className="gap-1.5" onClick={handleAddStage} disabled={savingStage || !stageForm.name}>
+              <Plus className="w-4 h-4" />
+              {savingStage ? "추가 중..." : "추가"}
             </Button>
           </DialogFooter>
         </DialogContent>
