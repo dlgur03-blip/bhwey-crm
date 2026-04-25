@@ -67,8 +67,8 @@ export default function TemplatesPage() {
           return (
             <Card key={tpl.id} className="rounded-xl overflow-hidden">
               {/* 카드 헤더 */}
-              <button
-                className="w-full flex items-center gap-4 p-5 text-left hover:bg-accent/50 transition-colors"
+              <div
+                className="w-full flex items-center gap-4 p-5 text-left hover:bg-accent/50 transition-colors cursor-pointer"
                 onClick={() => toggleExpand(tpl.id)}
               >
                 <div
@@ -126,7 +126,7 @@ export default function TemplatesPage() {
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   )}
                 </div>
-              </button>
+              </div>
 
               {/* 단계 상세 */}
               {isExpanded && (
